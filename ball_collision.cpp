@@ -3,7 +3,6 @@
 #include <iostream>
 #include "Vector2.h"
 
-const int sizeOfBall = 30;
 const int speed = 400;
 
 using namespace sf;
@@ -29,13 +28,12 @@ public:
 };
 
 void setBall(Ball &ball, RenderWindow &window, Time &time){
-    CircleShape circle(sizeOfBall);
+    CircleShape circle(ball.mass*10);
     circle.setOrigin(circle.getRadius(), circle.getRadius());
     ball.circle = circle;
     ball.circle.setPosition(Mouse::getPosition(window).x, Mouse::getPosition(window).y);
     ball.initialPosition.setPosition(Mouse::getPosition(window).x, Mouse::getPosition(window).y);
     ball.circle.setFillColor(Color::Red);
-    ball.mass = 1;
     ball.velocity = vec::Vector2(speed, speed*(-1));
     ball.timeOfCreation = time.asSeconds();
 }
@@ -120,22 +118,33 @@ int main()
     //window.setFramerateLimit(120);
     Event event;
     Clock clock;
+    Clock clock1;
 
     std::vector<Ball> balls;
 
+    float start = 0;
+
     while(window.isOpen()){
         Time time = clock.getElapsedTime();
+        Time time1 = clock1.getElapsedTime();
+        Ball ball;
 
         while(window.pollEvent(event)){
             if(event.type == Event::Closed)
                 window.close();
-            //if(event.type == event.MouseButtonPressed && event.mouseButton.button == Mouse::Left)
+            if(event.type == event.MouseButtonPressed && event.mouseButton.button == Mouse::Left)
+                start = time1.asSeconds();
             if(event.type == event.MouseButtonReleased && event.mouseButton.button == Mouse::Left){
-                Ball ball;
+                ball.mass = time1.asSeconds() - start;
                 setBall(ball, window, time);
                 balls.push_back(ball);
                 ballCount++;
             }
+        }
+
+        if(Mouse::isButtonPressed(Mouse::Left)){
+            ball.mass = time1.asSeconds() - start;
+            setBall(ball, window, time);
         }
 
         for(auto &i: balls) {
@@ -146,12 +155,13 @@ int main()
 
         for(int i = 0; i < ballCount; i++) {
             for(int j = i + 1; j < ballCount; j++)
-                    reflectBall(balls[i], balls[j], time);
+                reflectBall(balls[i], balls[j], time);
         }
 
         window.clear();
         for(auto &i : balls)
             window.draw(i.circle);
+        window.draw(ball.circle);
         window.display();
     }
 
